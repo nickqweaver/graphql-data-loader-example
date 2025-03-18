@@ -13,21 +13,21 @@ const client = createClient({
 });
 
 // Initialize Drizzle ORM
-export const db = drizzle(client, { schema, logger: true });
+export const db = drizzle(client, { schema, logger: false });
 // Seed function for development
 import { faker } from "@faker-js/faker";
 
 type SeedConfig = {
   categoriesCount: number;
-  manufacturersPerCategory: number;
-  productsPerManufacturer: number;
+  totalManufactures: number;
+  productsPerCategory: number;
 };
 
 export const seedDatabase = async (
   config: SeedConfig = {
     categoriesCount: 3,
-    manufacturersPerCategory: 3,
-    productsPerManufacturer: 3,
+    totalManufactures: 3,
+    productsPerCategory: 3,
   },
 ) => {
   try {
@@ -50,15 +50,13 @@ export const seedDatabase = async (
       const manufacturers = [];
       let manufacturerId = 1;
 
-      for (let i = 0; i < config.categoriesCount; i++) {
-        for (let j = 0; j < config.manufacturersPerCategory; j++) {
-          manufacturers.push({
-            id: manufacturerId++,
-            name: faker.company.name(),
-            country: faker.location.country(),
-            rating: Number(faker.number.float({ min: 3.0, max: 5.0 })),
-          });
-        }
+      for (let j = 0; j < config.totalManufactures; j++) {
+        manufacturers.push({
+          id: manufacturerId++,
+          name: faker.company.name(),
+          country: faker.location.country(),
+          rating: Number(faker.number.float({ min: 3.0, max: 5.0 })),
+        });
       }
       await db.insert(schema.manufacturers).values(manufacturers);
 
@@ -68,36 +66,33 @@ export const seedDatabase = async (
       let productId = 1;
 
       for (const category of categories) {
-        const categoryManufacturers = manufacturers.slice(
-          (category.id - 1) * config.manufacturersPerCategory,
-          category.id * config.manufacturersPerCategory,
-        );
+        const minManufactureId = 1;
+        const maxManufactureId = manufacturers.length + 1;
 
-        for (const manufacturer of categoryManufacturers) {
-          for (let i = 0; i < config.productsPerManufacturer; i++) {
-            // Add product
-            products.push({
-              id: productId,
-              name: faker.commerce.productName(),
-              price: Number(faker.commerce.price({ min: 100, max: 2000 })),
-              categoryId: category.id,
-              manufacturerId: manufacturer.id,
-            });
+        for (let i = 0; i < config.productsPerCategory; i++) {
+          products.push({
+            id: productId,
+            name: faker.commerce.productName(),
+            price: Number(faker.commerce.price({ min: 100, max: 2000 })),
+            categoryId: category.id,
+            manufacturerId: Math.floor(
+              Math.random() * (maxManufactureId - minManufactureId) +
+                minManufactureId,
+            ),
+          });
 
-            // Add corresponding stock info
-            stockInfo.push({
-              productId: productId,
-              quantity: faker.number.int({ min: 0, max: 1000 }),
-              location: `Warehouse ${faker.location.city()}`,
-              lastUpdated: new Date().toISOString(),
-            });
+          // Add corresponding stock info
+          stockInfo.push({
+            productId: productId,
+            quantity: faker.number.int({ min: 0, max: 1000 }),
+            location: `Warehouse ${faker.location.city()}`,
+            lastUpdated: new Date().toISOString(),
+          });
 
-            productId++;
-          }
+          productId++;
         }
       }
 
-      // Batch insert products and stock info
       const BATCH_SIZE = 500;
       for (let i = 0; i < products.length; i += BATCH_SIZE) {
         const productBatch = products.slice(i, i + BATCH_SIZE);
@@ -114,8 +109,12 @@ export const seedDatabase = async (
       console.log(`- ${manufacturers.length} manufacturers`);
       console.log(`- ${products.length} products`);
       console.log(`- ${stockInfo.length} stock records`);
+      return {
+        seeded: true,
+        message: `Seeded database with ${categories.length} Categories, ${manufacturers.length} Manufactures and ${products.length} Products`,
+      };
     } else {
-      console.log("Database already seeded");
+      return { seeded: false, message: "Database already seeded" };
     }
   } catch (error) {
     console.error("Error seeding database:", error);

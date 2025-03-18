@@ -28,30 +28,36 @@ export const resolvers = {
     },
   },
   Mutation: {
-    wipeDatabase: async (_: any, _args: {}, ctx: Context) => {
-      await ctx.db.transaction(async (tx) => {
-        await tx.delete(stockInfo);
-        await tx.delete(products);
-        await tx.delete(manufacturers);
-        await tx.delete(categories);
-      });
-      return true;
+    flushDatabase: async (_: any, _args: {}, ctx: Context) => {
+      try {
+        await ctx.db.transaction(async (tx) => {
+          await tx.delete(stockInfo);
+          await tx.delete(products);
+          await tx.delete(manufacturers);
+          await tx.delete(categories);
+        });
+        return { success: true, message: "Successfully flushed database" };
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
     },
     seedDatabase: async (
       _: any,
       args: {
         input: {
           categoriesCount: number;
-          manufacturersPerCategory: number;
-          productsPerManufacturer: number;
+          totalManufactures: number;
+          productsPerCategory: number;
         };
       },
     ) => {
       try {
-        await seedDatabase(args.input);
-        return true;
+        const res = await seedDatabase(args.input);
+        return { success: res.seeded, message: res.message };
       } catch (err) {
-        return false;
+        console.error(err);
+        throw err;
       }
     },
   },

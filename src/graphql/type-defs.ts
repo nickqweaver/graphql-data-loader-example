@@ -65,8 +65,8 @@ export const typeDefs = gql`
 
   input SeedDatabaseInput {
     categoriesCount: Int!
-    manufacturersPerCategory: Int!
-    productsPerManufacturer: Int!
+    totalManufactures: Int!
+    productsPerCategory: Int!
   }
 
   type Query {
@@ -74,8 +74,13 @@ export const typeDefs = gql`
     categoriesDataLoaded: [DataLoaderCategory!]!
   }
 
+  type Response {
+    success: Boolean!
+    message: String!
+  }
+
   type Mutation {
-    wipeDatabase: Boolean!
-    seedDatabase(input: SeedDatabaseInput): Boolean!
+    flushDatabase: Response!
+    seedDatabase(input: SeedDatabaseInput): Response!
   }
 `;
