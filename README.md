@@ -22,7 +22,7 @@ This project demonstrates side-by-side implementations of GraphQL resolvers with
 
 ```bash
 # Clone the repository
-git clone <repo-url>
+git clone https://github.com/nickqweaver/graphql-dataloader-example
 cd graphql-dataloader-example
 
 # Install dependencies
@@ -42,14 +42,14 @@ The Apollo Server will start on http://localhost:4000, providing a GraphiQL inte
 
 ### Seeding the Database
 
-Before querying, seed the database with test data using the GraphQL mutation:
+The database automatically seeds with the small dataset from the benchmarks. You can re seed it anytime just make sure you flush the database first with `flusDatabase`
 
 ```graphql
 mutation {
   seedDatabase(
     input: {
-      categoriesCount: 5
-      totalManufactures: 15
+      categoriesCount: 10
+      totalManufactures: 3
       productsPerCategory: 10
     }
   ) {

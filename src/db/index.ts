@@ -25,9 +25,9 @@ type SeedConfig = {
 
 export const seedDatabase = async (
   config: SeedConfig = {
-    categoriesCount: 3,
-    totalManufactures: 3,
-    productsPerCategory: 3,
+    categoriesCount: 10,
+    totalManufactures: 5,
+    productsPerCategory: 5,
   },
 ) => {
   try {
