@@ -1,5 +1,3 @@
-import fs from "fs";
-
 // Configuration
 const GRAPHQL_ENDPOINT = "http://localhost:4000/graphql"; // Adjust this to your GraphQL endpoint
 const ITERATIONS = 100;
