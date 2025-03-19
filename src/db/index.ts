@@ -13,7 +13,7 @@ const client = createClient({
 });
 
 // Initialize Drizzle ORM
-export const db = drizzle(client, { schema, logger: false });
+export const db = drizzle(client, { schema, logger: true });
 // Seed function for development
 import { faker } from "@faker-js/faker";
 

@@ -1,62 +1,82 @@
-# GraphQL DataLoader Performance Demo
+# GraphQL DataLoader Example
 
-This project demonstrates the performance benefits of using DataLoader in GraphQL applications to address the N+1 query problem.
+This repository provides a practical demonstration of using DataLoader with GraphQL to solve the N+1 query problem. It serves as a companion to my [blog article](https://nickweaver.dev/blog/why-you-need-data-loaders) about DataLoaders.
 
-## Overview
+## About
 
-When fetching nested data in GraphQL, a naive implementation can lead to the N+1 query problem - where retrieving a list of items results in additional database queries for each related entity. This demo showcases side-by-side comparisons of:
+The N+1 query problem is a common performance issue in GraphQL applications. When fetching nested data, a naive implementation can lead to making N additional database queries after the initial query - one for each related entity. DataLoader solves this by:
 
-1. **Standard GraphQL resolvers** - Direct database queries that suffer from N+1 issues
-2. **DataLoader-enhanced resolvers** - Batched and cached queries for significant performance improvements
+1. **Batching** - Collecting individual database requests into a single efficient query
+2. **Caching** - Remembering results to prevent duplicate queries
 
-## Schema Structure
+This project demonstrates side-by-side implementations of GraphQL resolvers with and without DataLoader, allowing you to see the performance difference yourself.
 
-The schema consists of products with related entities:
+## Getting Started
 
-- **Products** - Main entity with relationships to category, stock, and manufacturer
-- **Categories** - Each connected to multiple products
-- **Stock Information** - Inventory details for each product
-- **Manufacturers** - Companies that make products
+### Prerequisites
 
-Each entity exists in two versions in the schema:
+- Node.js (v20 or higher)
+- npm or yarn
 
-- Standard version (`Product`, `Category`, etc.)
-- DataLoader version (`DataLoaderProduct`, `DataLoaderCategory`, etc.)
+### Installation
 
-## Key Features
+```bash
+# Clone the repository
+git clone <repo-url>
+cd graphql-dataloader-example
 
-- **Dual Implementation**: Compare standard vs. DataLoader queries with identical data models
-- **Performance Metrics**: Visualize the difference in query time and database load
-- **Configurable Seed Data**: Generate test data of varying sizes to observe scaling effects
-- **Database Management**: Easily reset the database between test runs
+# Install dependencies
+npm install
+```
 
-## How to Use
+### Running the Application
 
-### Setup
+```bash
+# Start the development server
+npm run dev
+```
 
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Start the server: `npm start`
+The Apollo Server will start on http://localhost:4000, providing a GraphiQL interface.
+
+## Using the Example
 
 ### Seeding the Database
 
-Use the GraphQL mutation to generate test data:
+Before querying, seed the database with test data using the GraphQL mutation:
 
 ```graphql
 mutation {
   seedDatabase(
     input: {
       categoriesCount: 5
-      manufacturersPerCategory: 3
-      productsPerManufacturer: 10
+      totalManufactures: 15
+      productsPerCategory: 10
     }
-  )
+  ) {
+    success
+    message
+  }
 }
 ```
 
-### Running Test Queries
+This mutation creates categories, manufacturers, products, and stock information with random data.
 
-#### Standard Query (with N+1 problem)
+### Clearing the Database
+
+You can flush the database at any time with this mutation:
+
+```graphql
+mutation {
+  flushDatabase {
+    success
+    message
+  }
+}
+```
+
+### Querying Without DataLoader (N+1 Problem)
+
+To see the N+1 problem in action, run this query:
 
 ```graphql
 query {
@@ -83,7 +103,30 @@ query {
 }
 ```
 
-#### DataLoader Query (optimized)
+This query will perform:
+
+- 1 query to get all categories
+- N queries to get products for each category
+- N queries for each product's manufacturer
+- N queries for each product's stock information
+
+#### Observing the N+1 Problem in Action
+
+When you run the standard query above:
+
+1. Watch your terminal console as the query executes
+2. You'll see a large number of individual SQL queries being logged
+3. The queries will follow this pattern:
+   - One query for selecting all categories
+   - Separate queries for each category's products
+   - Separate queries for each product's manufacturer
+   - Separate queries for each product's stock information
+
+The total number of queries will be 1 + N + N + N, where N is the number of records at each level. This clearly demonstrates why the N+1 problem is a performance concern.
+
+### Querying With DataLoader (Optimized)
+
+Now run the same query using the DataLoader-optimized resolvers:
 
 ```graphql
 query {
@@ -110,61 +153,68 @@ query {
 }
 ```
 
-### Resetting the Database
+This version uses DataLoader to batch and cache the queries, reducing the number of database operations significantly.
 
-```graphql
-mutation {
-  wipeDatabase
-}
+## Benchmarking Performance
+
+A benchmark script is included to measure the performance difference:
+
+```bash
+# Run the benchmark
+ts-node scripts/benchmark-gql.ts
 ```
 
-## Why DataLoader Makes a Difference
+This script runs the query multiple times and records the response times for comparison. Results are saved to `dataloader_benchmark_results.csv`.
 
-### The N+1 Problem
+## How It Works
 
-In the standard implementation:
+This example uses:
 
-1. Initial query fetches a list of categories (1 query)
-2. For each category, a query fetches its products (N queries)
-3. For each product, additional queries fetch manufacturer and stock data (N × 2 queries)
+- **Apollo Server** for the GraphQL API
+- **DataLoader** library to implement batching
+- **Drizzle ORM** with SQLite for data storage
 
-This creates a multiplicative explosion of database requests as the data scales.
+The project implements parallel GraphQL types for both standard and DataLoader-enhanced resolvers:
 
-### DataLoader Solution
+- `Category` vs `DataLoaderCategory`
+- `Product` vs `DataLoaderProduct`
+- etc.
 
-DataLoader addresses this by:
+The key difference is in the resolver implementation:
 
-1. **Batching**: Collecting individual requests into a single efficient database query
-2. **Caching**: Remembering results to prevent duplicate queries for the same entity
-3. **Optimization**: Transforming inefficient nested queries into efficient batch operations
+- Standard resolvers make individual database queries
+- DataLoader resolvers use batch functions to collect, combine, and cache queries
 
-## Performance Comparison
+### SQL Query Logging
 
-With a modestly sized dataset (e.g., 5 categories, 3 manufacturers per category, 10 products per manufacturer):
+By default, SQL query logging is enabled so you can see the database queries being executed in real-time. When you run queries through GraphiQL, watch your terminal to see:
 
-| Implementation | Database Queries | Approximate Query Time |
-| -------------- | ---------------- | ---------------------- |
-| Standard       | 150+             | 500-1000ms             |
-| DataLoader     | ~4               | 50-100ms               |
+1. How many database queries are being executed
+2. The exact SQL being run
+3. The timing for each query
 
-The performance gap widens dramatically as the dataset size increases.
+This makes it easy to visualize the difference between standard and DataLoader-enhanced resolvers.
 
-## Implementation Notes
+If you want to disable query logging, you can edit the `src/db/index.ts` file and set the `logger` option to `false`:
 
-The demo uses:
+```typescript
+// Change this:
+export const db = drizzle(client, { schema, logger: true });
 
-- GraphQL for the API layer
-- DataLoader for query optimization
-- A simple database backend (details in code)
+// To this:
+export const db = drizzle(client, { schema, logger: false });
+```
 
-## Next Steps
+## Understanding the Code
 
-After exploring this demo, consider:
+Key files:
 
-- Implementing DataLoader in your own GraphQL services
-- Experimenting with different batch sizes and caching strategies
-- Adding monitoring to track query performance in production
+- `src/data-loaders/` - Contains DataLoader implementation
+- `src/graphql/resolvers.ts` - Contains both standard and DataLoader resolvers
+- `src/db/schema.ts` - Database schema definition
+- `scripts/benchmark-gql.ts` - Benchmarking script
 
 ## License
 
-[MIT]
+MIT
+
