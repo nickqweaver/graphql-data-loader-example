@@ -57,7 +57,7 @@ async function runBenchmark(): Promise<void> {
 
       await fetch(GRAPHQL_ENDPOINT, {
         method: "post",
-        body: JSON.stringify({ query: DATA_LOADER_QUERY }),
+        body: JSON.stringify({ query: NO_DATA_LOADER_QUERY }),
         headers: { "Content-Type": "application/json" },
       });
 
