@@ -214,6 +214,55 @@ Key files:
 - `src/db/schema.ts` - Database schema definition
 - `scripts/benchmark-gql.ts` - Benchmarking script
 
+## Benchmark Results
+
+## Test Configurations
+
+| Run | Label  | Categories | Products/Category | Manufacturers | Total Records |
+| --- | ------ | ---------- | ----------------- | ------------- | ------------- |
+| A   | Small  | 10         | 5                 | 5             | 50            |
+| B   | Medium | 50         | 20                | 20            | 1,000         |
+| C   | Large  | 200        | 50                | 50            | 10,000        |
+| D   | XL     | 1000       | 100               | 100           | 100,000       |
+
+## Performance Results
+
+### Run A (Small Dataset - 50 Records)
+
+| Metric                | With DataLoader | Without DataLoader | Improvement |
+| --------------------- | --------------- | ------------------ | ----------- |
+| Average Response Time | 3.36 ms         | 9.42 ms            | 64.3%       |
+| Median Response Time  | 2.55 ms         | 8.08 ms            | 68.4%       |
+| Min Response Time     | 1.79 ms         | 6.95 ms            | 74.2%       |
+| Max Response Time     | 43.60 ms        | 58.42 ms           | 25.4%       |
+
+### Run B (Medium Dataset - 1,000 Records)
+
+| Metric                | With DataLoader | Without DataLoader | Improvement |
+| --------------------- | --------------- | ------------------ | ----------- |
+| Average Response Time | 24.02 ms        | 144.74 ms          | 83.4%       |
+| Median Response Time  | 21.22 ms        | 139.39 ms          | 84.8%       |
+| Min Response Time     | 19.99 ms        | 133.27 ms          | 85.0%       |
+| Max Response Time     | 85.83 ms        | 225.82 ms          | 62.0%       |
+
+### Run C (Large Dataset - 10,000 Records)
+
+| Metric                | With DataLoader | Without DataLoader | Improvement |
+| --------------------- | --------------- | ------------------ | ----------- |
+| Average Response Time | 238.91 ms       | 1,543.83 ms        | 84.5%       |
+| Median Response Time  | 231.13 ms       | 1,537.57 ms        | 85.0%       |
+| Min Response Time     | 209.72 ms       | 1,445.89 ms        | 85.5%       |
+| Max Response Time     | 418.55 ms       | 1,807.23 ms        | 76.8%       |
+
+### Run D (Extra Large Dataset - 100,000 Records)
+
+| Metric                | With DataLoader | Without DataLoader | Improvement |
+| --------------------- | --------------- | ------------------ | ----------- |
+| Average Response Time | 6,133.99 ms     | 20592.45 ms        | 70.2%       |
+| Median Response Time  | 6,068.14 ms     | 20511.97 ms        | 70.4%       |
+| Min Response Time     | 5,761.18 ms     | 19250.59 ms        | 70.1%       |
+| Max Response Time     | 6,807.52 ms     | 21962.64 ms        | 69.0%       |
+
 ## License
 
 MIT
